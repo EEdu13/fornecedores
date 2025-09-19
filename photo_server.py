@@ -15,6 +15,8 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+print("🔍 DEBUG: Carregando variáveis de ambiente...")
+
 # SQL Server Azure Configuration
 SQL_CONFIG = {
     'server': os.getenv('SQL_SERVER'),
@@ -25,13 +27,23 @@ SQL_CONFIG = {
 }
 
 # PostgreSQL Railway Configuration
+try:
+    pgport = int(os.getenv('PGPORT', 21526))
+except (ValueError, TypeError):
+    pgport = 21526
+    print(f"⚠️  PGPORT inválido, usando padrão: {pgport}")
+
 PG_CONFIG = {
     'host': os.getenv('PGHOST'),
-    'port': int(os.getenv('PGPORT', 21526)),
+    'port': pgport,
     'user': os.getenv('PGUSER'),
     'password': os.getenv('PGPASSWORD'),
     'database': os.getenv('PGDATABASE')
 }
+
+print(f"🔍 SQL_SERVER: {'✅' if SQL_CONFIG.get('server') else '❌'}")
+print(f"🔍 PGHOST: {'✅' if PG_CONFIG.get('host') else '❌'}")
+print(f"🔍 PORT env: {os.getenv('PORT', 'não definida')}")
 
 class PhotoHandler:
     # In-memory storage for photos (temporary)
