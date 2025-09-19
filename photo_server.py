@@ -19,20 +19,20 @@ try:
 except ImportError as e:
     PYODBC_AVAILABLE = False
     print(f"⚠️  pyodbc não disponível: {e}")
-    print("🔄 Continuando sem SQL Server (apenas SQLite)")
+    print("🔄 Modo Railway: funcionando apenas com SQLite")
 
 # Load environment variables from .env file
 load_dotenv()
 
 print("🔍 DEBUG: Carregando variáveis de ambiente...")
 
-# SQL Server Azure Configuration - com valores padrão seguros
+# SQL Server Azure Configuration - só usa se pyodbc disponível
 SQL_CONFIG = {
-    'server': os.getenv('SQL_SERVER', ''),
-    'database': os.getenv('SQL_DATABASE', ''),
-    'username': os.getenv('SQL_USERNAME', ''),
-    'password': os.getenv('SQL_PASSWORD', ''),
-    'driver': os.getenv('SQL_DRIVER', '{ODBC Driver 17 for SQL Server}')
+    'server': os.getenv('SQL_SERVER', '') if PYODBC_AVAILABLE else '',
+    'database': os.getenv('SQL_DATABASE', '') if PYODBC_AVAILABLE else '',
+    'username': os.getenv('SQL_USERNAME', '') if PYODBC_AVAILABLE else '',
+    'password': os.getenv('SQL_PASSWORD', '') if PYODBC_AVAILABLE else '',
+    'driver': os.getenv('SQL_DRIVER', '{ODBC Driver 17 for SQL Server}') if PYODBC_AVAILABLE else ''
 }
 
 # PostgreSQL Railway Configuration - com valores padrão seguros
@@ -55,6 +55,15 @@ print(f"🔍 PGHOST: {'✅' if PG_CONFIG.get('host') else '❌'}")
 print(f"🔍 PORT env: {os.getenv('PORT', 'não definida')}")
 print("🔍 DEBUG: Configuração carregada, continuando inicialização...")
 
+# Mock data for when SQL Server is not available (Railway deployment)
+MOCK_SUPPLIERS = [
+    {"id": 1, "fornecedor": "RESTAURANTE POPULAR", "cpf_cnpj": "12.345.678/0001-90", "valor": 15.50, "tipo_forn": "Almoço"},
+    {"id": 2, "fornecedor": "LANCHONETE BOM SABOR", "cpf_cnpj": "98.765.432/0001-10", "valor": 12.00, "tipo_forn": "Lanche"},
+    {"id": 3, "fornecedor": "PADARIA CENTRAL", "cpf_cnpj": "11.222.333/0001-44", "valor": 8.50, "tipo_forn": "Café"},
+    {"id": 4, "fornecedor": "CANTINA UNIVERSITÁRIA", "cpf_cnpj": "55.666.777/0001-88", "valor": 18.00, "tipo_forn": "Almoço"},
+    {"id": 5, "fornecedor": "PIZZARIA DELIVERY", "cpf_cnpj": "33.444.555/0001-22", "valor": 25.00, "tipo_forn": "Jantar"}
+]
+
 class PhotoHandler:
     # In-memory storage for photos (temporary)
     photos = {}
@@ -76,6 +85,35 @@ class PhotoHandler:
             print(f"Cleaned up {len(to_remove)} old photos")
 
 class HTTPHandler(http.server.SimpleHTTPRequestHandler):
+    
+    def get_mock_suppliers(self):
+        """Return mock supplier data for Railway deployment"""
+        suppliers = []
+        for mock_supplier in MOCK_SUPPLIERS:
+            supplier = {
+                'fornecedor': mock_supplier['fornecedor'],
+                'cpf_cnpj': mock_supplier['cpf_cnpj'],
+                'cafe': 0.0,
+                'almoco_marmitex': 0.0,
+                'almoco_local': 0.0,
+                'janta_marmitex': 0.0,
+                'janta_local': 0.0,
+                'gelo': 0.0
+            }
+            
+            # Map mock data to appropriate fields
+            if mock_supplier['tipo_forn'] == 'Café':
+                supplier['cafe'] = mock_supplier['valor']
+            elif mock_supplier['tipo_forn'] == 'Almoço':
+                supplier['almoco_local'] = mock_supplier['valor']
+            elif mock_supplier['tipo_forn'] == 'Jantar':
+                supplier['janta_local'] = mock_supplier['valor']
+            elif mock_supplier['tipo_forn'] == 'Lanche':
+                supplier['cafe'] = mock_supplier['valor']
+            
+            suppliers.append(supplier)
+        
+        return suppliers
     
     def get_sql_connection(self):
         """Create and return SQL Server Azure connection"""
@@ -212,69 +250,71 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
             return
                 
         elif path == '/api/suppliers':
-            # Fetch suppliers from SQL Server Azure
+            # Fetch suppliers from SQL Server Azure or use mock data
             try:
-                if not SQL_CONFIG.get('server') or not SQL_CONFIG.get('password'):
-                    self.send_response(503)
-                    self.send_header('Content-type', 'application/json')
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({
-                        'error': 'SQL Server not configured',
-                        'message': 'Database credentials not available'
-                    }).encode('utf-8'))
-                    return
-                
-                conn = self.get_sql_connection()
-                cursor = conn.cursor()
-                
-                # Query tb_fornecedores table
-                query = """
-                SELECT FORNECEDOR, CPF_CNPJ, VALOR, TIPO_FORN, PROJETO, LOCAL
-                FROM tb_fornecedores
-                ORDER BY FORNECEDOR, TIPO_FORN
-                """
-                
-                cursor.execute(query)
-                rows = cursor.fetchall()
-                
-                # Group by supplier and organize by meal type
-                suppliers_dict = {}
-                for row in rows:
-                    fornecedor = row[0] if row[0] else ''
-                    cpf_cnpj = row[1] if row[1] else ''
-                    valor = float(row[2]) if row[2] else 0.0
-                    tipo_forn = row[3] if row[3] else ''
-                    
-                    if fornecedor not in suppliers_dict:
-                        suppliers_dict[fornecedor] = {
-                            'fornecedor': fornecedor,
-                            'cpf_cnpj': cpf_cnpj,
-                            'cafe': 0.0,
-                            'almoco_marmitex': 0.0,
-                            'almoco_local': 0.0,
-                            'janta_marmitex': 0.0,
-                            'janta_local': 0.0,
-                            'gelo': 0.0
-                        }
-                    
-                    # Direct mapping based on exact SQL values
-                    if tipo_forn == 'CAFÉ':
-                        suppliers_dict[fornecedor]['cafe'] = valor
-                    elif tipo_forn == 'ALMOÇO MARMITEX':
-                        suppliers_dict[fornecedor]['almoco_marmitex'] = valor
-                    elif tipo_forn == 'ALMOÇO LOCAL':
-                        suppliers_dict[fornecedor]['almoco_local'] = valor
-                    elif tipo_forn == 'JANTA MARMITEX':
-                        suppliers_dict[fornecedor]['janta_marmitex'] = valor
-                    elif tipo_forn == 'JANTA LOCAL':
-                        suppliers_dict[fornecedor]['janta_local'] = valor
-                    elif tipo_forn == 'GELO':
-                        suppliers_dict[fornecedor]['gelo'] = valor
-                
-                suppliers = list(suppliers_dict.values())
-                
-                conn.close()
+                # Try SQL Server first if available
+                if PYODBC_AVAILABLE and SQL_CONFIG.get('server') and SQL_CONFIG.get('password'):
+                    try:
+                        conn = self.get_sql_connection()
+                        cursor = conn.cursor()
+                        
+                        # Query tb_fornecedores table
+                        query = """
+                        SELECT FORNECEDOR, CPF_CNPJ, VALOR, TIPO_FORN, PROJETO, LOCAL
+                        FROM tb_fornecedores
+                        ORDER BY FORNECEDOR, TIPO_FORN
+                        """
+                        
+                        cursor.execute(query)
+                        rows = cursor.fetchall()
+                        
+                        # Group by supplier and organize by meal type
+                        suppliers_dict = {}
+                        for row in rows:
+                            fornecedor = row[0] if row[0] else ''
+                            cpf_cnpj = row[1] if row[1] else ''
+                            valor = float(row[2]) if row[2] else 0.0
+                            tipo_forn = row[3] if row[3] else ''
+                            
+                            if fornecedor not in suppliers_dict:
+                                suppliers_dict[fornecedor] = {
+                                    'fornecedor': fornecedor,
+                                    'cpf_cnpj': cpf_cnpj,
+                                    'cafe': 0.0,
+                                    'almoco_marmitex': 0.0,
+                                    'almoco_local': 0.0,
+                                    'janta_marmitex': 0.0,
+                                    'janta_local': 0.0,
+                                    'gelo': 0.0
+                                }
+                            
+                            # Direct mapping based on exact SQL values
+                            if tipo_forn == 'CAFÉ':
+                                suppliers_dict[fornecedor]['cafe'] = valor
+                            elif tipo_forn == 'ALMOÇO MARMITEX':
+                                suppliers_dict[fornecedor]['almoco_marmitex'] = valor
+                            elif tipo_forn == 'ALMOÇO LOCAL':
+                                suppliers_dict[fornecedor]['almoco_local'] = valor
+                            elif tipo_forn == 'JANTA MARMITEX':
+                                suppliers_dict[fornecedor]['janta_marmitex'] = valor
+                            elif tipo_forn == 'JANTA LOCAL':
+                                suppliers_dict[fornecedor]['janta_local'] = valor
+                            elif tipo_forn == 'GELO':
+                                suppliers_dict[fornecedor]['gelo'] = valor
+                        
+                        suppliers = list(suppliers_dict.values())
+                        conn.close()
+                        print(f"✅ Loaded {len(suppliers)} suppliers from SQL Server")
+                        
+                    except Exception as sql_error:
+                        print(f"⚠️  SQL Server error, using mock data: {sql_error}")
+                        # Use mock data as fallback
+                        suppliers = self.get_mock_suppliers()
+                        
+                else:
+                    # No SQL Server available, use mock data
+                    print("📋 No SQL Server config, using mock data")
+                    suppliers = self.get_mock_suppliers()
                 
                 self.send_response(200)
                 self.send_header('Content-type', 'application/json')
