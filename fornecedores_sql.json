@@ -1,0 +1,422 @@
+[
+  {
+    "fornecedor": "AGUINALDO JOSE DA SILVA - REST E ESPETINHO DO IRMÃO",
+    "cpf_cnpj": "12.323.430/0001-23",
+    "cafe": 15.0,
+    "almoco_marmitex": 25.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 25.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "ALEXANDRO S. DA SILVA LTDA - CONVENIENCIA B&N",
+    "cpf_cnpj": "50.715.961/0001-50",
+    "cafe": 0.0,
+    "almoco_marmitex": 28.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 23.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "ALEXANDRO S. DA SILVA LTDA - COVENIENCIA B&N",
+    "cpf_cnpj": "50.715.961/0001-50",
+    "cafe": 12.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "APARECIDINHA COMB SERVIÇOS RESTAURANTE",
+    "cpf_cnpj": "43.241.093/0001-59",
+    "cafe": 0.0,
+    "almoco_marmitex": 29.9,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "ARAMIS EVANDRO HART - RESTAURANTE VENETO.",
+    "cpf_cnpj": "12.437.777/0001-05",
+    "cafe": 0.0,
+    "almoco_marmitex": 25.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 25.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "BOM CHURRASCO RIOVERDINHO",
+    "cpf_cnpj": "55.190.591/0001-07",
+    "cafe": 0.0,
+    "almoco_marmitex": 20.0,
+    "almoco_local": 20.0,
+    "janta_marmitex": 20.0,
+    "janta_local": 20.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "CARGA PESADA",
+    "cpf_cnpj": "",
+    "cafe": 0.0,
+    "almoco_marmitex": 25.0,
+    "almoco_local": 25.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 25.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "CHURRASCARIA E RESTAURANTE CASARÃO",
+    "cpf_cnpj": "28.386.774/0001-11",
+    "cafe": 10.0,
+    "almoco_marmitex": 20.0,
+    "almoco_local": 20.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 20.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "CONVENIENCIA E RESTAURANTE PARAISO LTDA",
+    "cpf_cnpj": "58.283.378/0001-20",
+    "cafe": 9.0,
+    "almoco_marmitex": 22.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 22.0,
+    "janta_local": 22.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "CRISTIANE RODRIGUES CAETANO - CRISMAR CONFEITARIA",
+    "cpf_cnpj": "06.328.192/0001-46",
+    "cafe": 8.5,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 30.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "DELICIAS DA LE LTDA",
+    "cpf_cnpj": "47.876.799/0001-48",
+    "cafe": 0.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 24.0,
+    "janta_marmitex": 22.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "DELICIAS DA LE LTDA ",
+    "cpf_cnpj": "47.876.799/0001-48",
+    "cafe": 0.0,
+    "almoco_marmitex": 22.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 24.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "DEOCLIDES JOSE VEBER E CIA LTDA",
+    "cpf_cnpj": "11.148.030/0001-66",
+    "cafe": 13.5,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 23.0,
+    "janta_marmitex": 23.0,
+    "janta_local": 23.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "DONA BELLA MARMITAS - JESSICA SOUZA AGUIAR SILVA",
+    "cpf_cnpj": "60.455.954/0001-10",
+    "cafe": 0.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 26.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "DONA BELLA MARMITAS LTDA - JESSICA TATIANA DE SOUZA AGUIAR SILVA",
+    "cpf_cnpj": "60.455.954/0001-10",
+    "cafe": 0.0,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 26.0,
+    "janta_marmitex": 23.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "EDSON SCHAURICH TAVARES",
+    "cpf_cnpj": "46.155.390.0001-70",
+    "cafe": 0.0,
+    "almoco_marmitex": 20.5,
+    "almoco_local": 25.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "ELIETE LIMA - MAURO REST CAMINHONEIROS",
+    "cpf_cnpj": "22.074.680/0001-20",
+    "cafe": 10.0,
+    "almoco_marmitex": 22.0,
+    "almoco_local": 26.0,
+    "janta_marmitex": 22.0,
+    "janta_local": 26.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "ELIZETE KORELLO - PIZZARIA PRIMAVERA",
+    "cpf_cnpj": "25.063.550/0001-80",
+    "cafe": 0.0,
+    "almoco_marmitex": 17.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 21.9,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "EMPORIO PAES E DOCES LTDA",
+    "cpf_cnpj": "12.803.000/0001-09",
+    "cafe": 10.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "H F VIA RESTAURANTE LTDA - 3 TCHE",
+    "cpf_cnpj": "52.998.492/0001-50",
+    "cafe": 9.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "HOTEL PALACE QUEIROZ LTDA - ME",
+    "cpf_cnpj": "55.869.934/0001-56",
+    "cafe": 8.5,
+    "almoco_marmitex": 18.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 18.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "K & L PANIFICADORA LTDA",
+    "cpf_cnpj": "10.894.860/0001-70",
+    "cafe": 8.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "L R ALENCAR LTDA - LEILA",
+    "cpf_cnpj": "55.026.402/0001-57",
+    "cafe": 10.49,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "LETICIA SILVA PEREIRA",
+    "cpf_cnpj": "54.150.968/0001-23",
+    "cafe": 10.0,
+    "almoco_marmitex": 20.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "LUZIA BARONI",
+    "cpf_cnpj": "46.352.331/0001-91",
+    "cafe": 0.0,
+    "almoco_marmitex": 20.0,
+    "almoco_local": 24.0,
+    "janta_marmitex": 20.0,
+    "janta_local": 24.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "MARLI APARECIDA GRACIANO DA CRUZ - MANAH",
+    "cpf_cnpj": "29.169.135./0001-67",
+    "cafe": 0.0,
+    "almoco_marmitex": 20.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 20.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "MARMITEX I & V LIMITADA - IANCA",
+    "cpf_cnpj": "47.146.817/0001-36",
+    "cafe": 0.0,
+    "almoco_marmitex": 19.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 19.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "NATHAN SILVA BARROS",
+    "cpf_cnpj": "60.618.617/0001-05",
+    "cafe": 10.0,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 23.0,
+    "janta_marmitex": 23.0,
+    "janta_local": 23.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "NIDYA DE AZEVEDO ONCA - SABOR DO CAMPO",
+    "cpf_cnpj": "35.793.261/0002-71",
+    "cafe": 0.0,
+    "almoco_marmitex": 23.9,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "PALLADAR BAR E RESTAURANTE",
+    "cpf_cnpj": "26.084.740/0001-47",
+    "cafe": 0.0,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 23.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "PANIFICADORA BIG PÃO LTDA  - ANDERSON",
+    "cpf_cnpj": "41.815.995/0001-26",
+    "cafe": 8.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "PANIFICADORA BOM PAO LTDA",
+    "cpf_cnpj": "09.499.590/0001-13",
+    "cafe": 8.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "PANIFICADORA PRATA DA CASA - ALFREDO",
+    "cpf_cnpj": "04.456.013/0001-20",
+    "cafe": 9.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "PANIFICADORA VITOR - MARIZA MARIA DO NASCIMENTO",
+    "cpf_cnpj": "09.446.587/0001-31",
+    "cafe": 10.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "RESTAURANTE AVENIDA - LAURA MELO ",
+    "cpf_cnpj": "26.418.521/0001-57 ",
+    "cafe": 0.0,
+    "almoco_marmitex": 20.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "RESTAURANTE BICA D' AGUA - ADRIANA",
+    "cpf_cnpj": "54.812.567/0001-91",
+    "cafe": 10.0,
+    "almoco_marmitex": 21.0,
+    "almoco_local": 21.0,
+    "janta_marmitex": 21.0,
+    "janta_local": 21.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "RESTAURANTE COLONIAL LTDA",
+    "cpf_cnpj": "53.133.389/0001-00",
+    "cafe": 11.0,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 23.0,
+    "janta_marmitex": 23.0,
+    "janta_local": 23.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "RESTAURANTE SAMUELSSON ",
+    "cpf_cnpj": "41.880.795/0001-57",
+    "cafe": 0.0,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "SANTOS AMARAL E CIA LTDA - CRISTIANO",
+    "cpf_cnpj": "55.989.442/0001-02",
+    "cafe": 0.0,
+    "almoco_marmitex": 23.0,
+    "almoco_local": 23.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 23.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "SEUVA NASCIMENTO AKEGAWA LTDA - SABOR MINEIRO",
+    "cpf_cnpj": "05.933.415/0001-31",
+    "cafe": 0.0,
+    "almoco_marmitex": 22.0,
+    "almoco_local": 22.0,
+    "janta_marmitex": 22.0,
+    "janta_local": 22.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "SIDNEIA DE OLIVEIRA",
+    "cpf_cnpj": "52.728.655/0001-84",
+    "cafe": 6.0,
+    "almoco_marmitex": 22.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  },
+  {
+    "fornecedor": "SUPERMERCADO CANARIOS LTDA - MANOEL ALVES DE OLIVEIRA NETO",
+    "cpf_cnpj": "28.751.984/0001-61",
+    "cafe": 10.0,
+    "almoco_marmitex": 0.0,
+    "almoco_local": 0.0,
+    "janta_marmitex": 0.0,
+    "janta_local": 0.0,
+    "gelo": 0.0
+  }
+]
