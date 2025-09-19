@@ -147,21 +147,92 @@ def get_photo(session_id):
 
 @app.route('/api/save-order', methods=['POST'])
 def save_order():
-    """API para salvar pedidos (placeholder)"""
+    """API para salvar pedidos com quantidades no banco"""
     try:
         data = request.get_json()
         print(f"📋 Pedido recebido: {data}")
         
-        # Aqui você pode implementar a lógica para salvar no banco
-        # Por enquanto, apenas retorna sucesso
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Dados não fornecidos'
+            }), 400
+        
+        # Extrair dados do pedido
+        funcionario = data.get('funcionario', '')
+        cpf = data.get('cpf', '')
+        data_pedido = data.get('data', '')
+        pedidos = data.get('pedidos', [])
+        
+        if not pedidos:
+            return jsonify({
+                'success': False,
+                'error': 'Nenhum pedido especificado'
+            }), 400
+        
+        print(f"💾 Salvando pedido para {funcionario} - {len(pedidos)} itens")
+        
+        # Conectar ao banco para salvar
+        connection = conectar_azure_sql()
+        if not connection:
+            return jsonify({
+                'success': False,
+                'error': 'Erro de conexão com o banco de dados'
+            }), 500
+        
+        cursor = connection.cursor()
+        
+        # Salvar cada item do pedido
+        itens_salvos = 0
+        for pedido in pedidos:
+            try:
+                fornecedor = pedido.get('fornecedor', '')
+                cafe_qtd = pedido.get('cafe', 0)
+                almoco_marmitex_qtd = pedido.get('almoco_marmitex', 0)
+                almoco_local_qtd = pedido.get('almoco_local', 0)
+                janta_marmitex_qtd = pedido.get('janta_marmitex', 0)
+                janta_local_qtd = pedido.get('janta_local', 0)
+                gelo_qtd = pedido.get('gelo', 0)
+                
+                # Inserir pedido na tabela (assumindo que existe uma tabela tb_pedidos)
+                query = """
+                INSERT INTO tb_pedidos 
+                (funcionario, cpf, data_pedido, fornecedor, cafe_qtd, almoco_marmitex_qtd, 
+                 almoco_local_qtd, janta_marmitex_qtd, janta_local_qtd, gelo_qtd, data_criacao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
+                """
+                
+                cursor.execute(query, (
+                    funcionario, cpf, data_pedido, fornecedor,
+                    cafe_qtd, almoco_marmitex_qtd, almoco_local_qtd,
+                    janta_marmitex_qtd, janta_local_qtd, gelo_qtd
+                ))
+                
+                itens_salvos += 1
+                print(f"✅ Item salvo: {fornecedor} - CAFÉ:{cafe_qtd}, ALMOÇO MARMITEX:{almoco_marmitex_qtd}, ALMOÇO LOCAL:{almoco_local_qtd}")
+                
+            except Exception as e:
+                print(f"❌ Erro ao salvar item {fornecedor}: {e}")
+                continue
+        
+        # Confirmar transação
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        print(f"✅ Pedido salvo: {itens_salvos} itens para {funcionario}")
         
         return jsonify({
             'success': True,
-            'message': 'Pedido salvo com sucesso'
+            'message': f'Pedido salvo com sucesso! {itens_salvos} itens processados',
+            'itens_salvos': itens_salvos,
+            'funcionario': funcionario
         })
         
     except Exception as e:
         print(f"❌ Erro ao salvar pedido: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': str(e)
