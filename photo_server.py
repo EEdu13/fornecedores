@@ -79,20 +79,31 @@ def criar_tabela_pedidos_postgresql():
         
         cursor = connection.cursor()
         
-        # Criar tabela se não existir
+        # Criar tabela com a estrutura correta
         create_table_query = """
         CREATE TABLE IF NOT EXISTS tb_pedidos (
             id SERIAL PRIMARY KEY,
-            funcionario VARCHAR(255),
-            cpf VARCHAR(20),
-            data_pedido VARCHAR(20),
-            fornecedor VARCHAR(255),
-            cafe_qtd INTEGER DEFAULT 0,
-            almoco_marmitex_qtd INTEGER DEFAULT 0,
-            almoco_local_qtd INTEGER DEFAULT 0,
-            janta_marmitex_qtd INTEGER DEFAULT 0,
-            janta_local_qtd INTEGER DEFAULT 0,
-            gelo_qtd INTEGER DEFAULT 0,
+            data_refeicao DATE,
+            cnpj CHAR(14),
+            fornecedor TEXT,
+            cafe NUMERIC(10,2) DEFAULT 0,
+            almoco_marmitex NUMERIC(10,2) DEFAULT 0,
+            almoco_local NUMERIC(10,2) DEFAULT 0,
+            janta_marmitex NUMERIC(10,2) DEFAULT 0,
+            janta_local NUMERIC(10,2) DEFAULT 0,
+            gelo NUMERIC(10,2) DEFAULT 0,
+            valor_cafe NUMERIC(12,2) DEFAULT 0,
+            valor_almoco_marmitex NUMERIC(12,2) DEFAULT 0,
+            valor_almoco_local NUMERIC(12,2) DEFAULT 0,
+            valor_janta_marmitex NUMERIC(12,2) DEFAULT 0,
+            valor_janta_local NUMERIC(12,2) DEFAULT 0,
+            valor_gelo NUMERIC(12,2) DEFAULT 0,
+            total_cafe NUMERIC(14,2) DEFAULT 0,
+            total_almoco_marmitex NUMERIC(14,2) DEFAULT 0,
+            total_almoco_local NUMERIC(14,2) DEFAULT 0,
+            total_janta_marmitex NUMERIC(14,2) DEFAULT 0,
+            total_janta_local NUMERIC(14,2) DEFAULT 0,
+            total_gelo NUMERIC(14,2) DEFAULT 0,
             data_criacao TIMESTAMP DEFAULT NOW()
         );
         """
@@ -108,6 +119,63 @@ def criar_tabela_pedidos_postgresql():
     except Exception as e:
         print(f"❌ Erro ao criar tabela PostgreSQL: {e}")
         return False
+
+def buscar_valores_fornecedor(fornecedor_nome):
+    """Busca os valores unitários de um fornecedor no SQL Azure"""
+    try:
+        connection = conectar_azure_sql()
+        if not connection:
+            return None
+
+        cursor = connection.cursor(as_dict=True)
+        cursor.execute("""
+            SELECT FORNECEDOR, CPF_CNPJ, VALOR, TIPO_FORN
+            FROM tb_fornecedores
+            WHERE FORNECEDOR = %s
+            ORDER BY TIPO_FORN
+        """, (fornecedor_nome,))
+        
+        dados = cursor.fetchall()
+        cursor.close()
+        connection.close()
+        
+        # Organizar valores por tipo
+        valores = {
+            'fornecedor': fornecedor_nome,
+            'cnpj': '',
+            'cafe': 0.0,
+            'almoco_marmitex': 0.0,
+            'almoco_local': 0.0,
+            'janta_marmitex': 0.0,
+            'janta_local': 0.0,
+            'gelo': 0.0
+        }
+        
+        for row in dados:
+            if row['CPF_CNPJ']:
+                valores['cnpj'] = row['CPF_CNPJ']
+            
+            valor = float(row['VALOR']) if row['VALOR'] else 0.0
+            tipo_clean = row['TIPO_FORN'].strip().upper() if row['TIPO_FORN'] else ''
+            
+            if tipo_clean in ['CAFÉ', 'CAFE']:
+                valores['cafe'] = valor
+            elif tipo_clean == 'ALMOÇO MARMITEX':
+                valores['almoco_marmitex'] = valor
+            elif tipo_clean == 'ALMOÇO LOCAL':
+                valores['almoco_local'] = valor
+            elif tipo_clean == 'JANTA MARMITEX':
+                valores['janta_marmitex'] = valor
+            elif tipo_clean == 'JANTA LOCAL':
+                valores['janta_local'] = valor
+            elif tipo_clean == 'GELO':
+                valores['gelo'] = valor
+        
+        return valores
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar valores do fornecedor: {e}")
+        return None
 
 @app.route('/favicon.ico')
 def favicon():
@@ -271,29 +339,87 @@ def save_order():
         for pedido in pedidos:
             try:
                 fornecedor = pedido.get('fornecedor', '')
-                cafe_qtd = pedido.get('cafe', 0)
-                almoco_marmitex_qtd = pedido.get('almoco_marmitex', 0)
-                almoco_local_qtd = pedido.get('almoco_local', 0)
-                janta_marmitex_qtd = pedido.get('janta_marmitex', 0)
-                janta_local_qtd = pedido.get('janta_local', 0)
-                gelo_qtd = pedido.get('gelo', 0)
+                cnpj = cpf  # usar o CNPJ do pedido
+                data_refeicao = data_pedido
                 
-                # Inserir pedido na tabela PostgreSQL
+                # Quantidades
+                cafe_qtd = float(pedido.get('cafe', 0))
+                almoco_marmitex_qtd = float(pedido.get('almoco_marmitex', 0))
+                almoco_local_qtd = float(pedido.get('almoco_local', 0))
+                janta_marmitex_qtd = float(pedido.get('janta_marmitex', 0))
+                janta_local_qtd = float(pedido.get('janta_local', 0))
+                gelo_qtd = float(pedido.get('gelo', 0))
+                
+                # Buscar valores unitários do SQL Azure
+                sql_conn = conectar_azure_sql()
+                if sql_conn:
+                    sql_cursor = sql_conn.cursor(as_dict=True)
+                    sql_cursor.execute("""
+                        SELECT TIPO_FORN, VALOR 
+                        FROM tb_fornecedores 
+                        WHERE FORNECEDOR = %s
+                    """, (fornecedor,))
+                    
+                    valores = sql_cursor.fetchall()
+                    sql_cursor.close()
+                    sql_conn.close()
+                    
+                    # Mapear valores unitários
+                    valor_cafe = 0.0
+                    valor_almoco_marmitex = 0.0
+                    valor_almoco_local = 0.0
+                    valor_janta_marmitex = 0.0
+                    valor_janta_local = 0.0
+                    valor_gelo = 0.0
+                    
+                    for row in valores:
+                        tipo = row['TIPO_FORN'].strip().upper() if row['TIPO_FORN'] else ''
+                        valor = float(row['VALOR']) if row['VALOR'] else 0.0
+                        
+                        if tipo in ['CAFÉ', 'CAFE']:
+                            valor_cafe = valor
+                        elif tipo == 'ALMOÇO MARMITEX':
+                            valor_almoco_marmitex = valor
+                        elif tipo == 'ALMOÇO LOCAL':
+                            valor_almoco_local = valor
+                        elif tipo == 'JANTA MARMITEX':
+                            valor_janta_marmitex = valor
+                        elif tipo == 'JANTA LOCAL':
+                            valor_janta_local = valor
+                        elif tipo == 'GELO':
+                            valor_gelo = valor
+                
+                # Calcular totais
+                total_cafe = cafe_qtd * valor_cafe
+                total_almoco_marmitex = almoco_marmitex_qtd * valor_almoco_marmitex
+                total_almoco_local = almoco_local_qtd * valor_almoco_local
+                total_janta_marmitex = janta_marmitex_qtd * valor_janta_marmitex
+                total_janta_local = janta_local_qtd * valor_janta_local
+                total_gelo = gelo_qtd * valor_gelo
+                
+                # Inserir no PostgreSQL
                 query = """
                 INSERT INTO tb_pedidos 
-                (funcionario, cpf, data_pedido, fornecedor, cafe_qtd, almoco_marmitex_qtd, 
-                 almoco_local_qtd, janta_marmitex_qtd, janta_local_qtd, gelo_qtd, data_criacao)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                (data_refeicao, cnpj, fornecedor, cafe, almoco_marmitex, almoco_local, 
+                 janta_marmitex, janta_local, gelo, valor_cafe, valor_almoco_marmitex,
+                 valor_almoco_local, valor_janta_marmitex, valor_janta_local, valor_gelo,
+                 total_cafe, total_almoco_marmitex, total_almoco_local, 
+                 total_janta_marmitex, total_janta_local, total_gelo)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 
                 cursor.execute(query, (
-                    funcionario, cpf, data_pedido, fornecedor,
+                    data_refeicao, cnpj, fornecedor,
                     cafe_qtd, almoco_marmitex_qtd, almoco_local_qtd,
-                    janta_marmitex_qtd, janta_local_qtd, gelo_qtd
+                    janta_marmitex_qtd, janta_local_qtd, gelo_qtd,
+                    valor_cafe, valor_almoco_marmitex, valor_almoco_local,
+                    valor_janta_marmitex, valor_janta_local, valor_gelo,
+                    total_cafe, total_almoco_marmitex, total_almoco_local,
+                    total_janta_marmitex, total_janta_local, total_gelo
                 ))
                 
                 itens_salvos += 1
-                print(f"✅ Item salvo: {fornecedor} - CAFÉ:{cafe_qtd}, ALMOÇO MARMITEX:{almoco_marmitex_qtd}, ALMOÇO LOCAL:{almoco_local_qtd}, JANTA MARMITEX:{janta_marmitex_qtd}, JANTA LOCAL:{janta_local_qtd}, GELO:{gelo_qtd}")
+                print(f"✅ Item salvo: {fornecedor} - Total: R$ {total_cafe + total_almoco_marmitex + total_almoco_local + total_janta_marmitex + total_janta_local + total_gelo:.2f}")
                 
             except Exception as e:
                 print(f"❌ Erro ao salvar item {fornecedor}: {e}")
