@@ -6,11 +6,20 @@ import socketserver
 import json
 import os
 import socket
-import pyodbc
 import sqlite3
 import traceback
 from datetime import datetime
 from dotenv import load_dotenv
+
+# Try to import pyodbc, but don't fail if it's not available
+try:
+    import pyodbc
+    PYODBC_AVAILABLE = True
+    print("✅ pyodbc importado com sucesso")
+except ImportError as e:
+    PYODBC_AVAILABLE = False
+    print(f"⚠️  pyodbc não disponível: {e}")
+    print("🔄 Continuando sem SQL Server (apenas SQLite)")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -71,6 +80,9 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
     def get_sql_connection(self):
         """Create and return SQL Server Azure connection"""
         try:
+            if not PYODBC_AVAILABLE:
+                raise Exception("pyodbc not available - cannot connect to SQL Server")
+                
             if not SQL_CONFIG.get('server') or not SQL_CONFIG.get('password'):
                 raise Exception("SQL Server credentials not configured")
                 
