@@ -113,21 +113,24 @@ def get_suppliers():
                     'gelo': 0.0
                 }
             
-            # Mapear tipos de fornecimento
-            if tipo_forn == 'CAFÉ':
+            # Mapear tipos de fornecimento - aceitar variações
+            tipo_clean = tipo_forn.strip().upper() if tipo_forn else ''
+            
+            if tipo_clean in ['CAFÉ', 'CAFE']:
                 suppliers_dict[fornecedor]['cafe'] = valor
-            elif tipo_forn == 'ALMOÇO MARMITEX':
+            elif tipo_clean == 'ALMOÇO MARMITEX':
                 suppliers_dict[fornecedor]['almoco_marmitex'] = valor
-            elif tipo_forn == 'ALMOÇO LOCAL':
+            elif tipo_clean == 'ALMOÇO LOCAL':
                 suppliers_dict[fornecedor]['almoco_local'] = valor
-            elif tipo_forn == 'JANTA MARMITEX':
+            elif tipo_clean == 'JANTA MARMITEX':
                 suppliers_dict[fornecedor]['janta_marmitex'] = valor
-            elif tipo_forn == 'JANTA LOCAL':
+            elif tipo_clean == 'JANTA LOCAL':
                 suppliers_dict[fornecedor]['janta_local'] = valor
-            elif tipo_forn == 'GELO':
+            elif tipo_clean == 'GELO':
                 suppliers_dict[fornecedor]['gelo'] = valor
         
         suppliers = list(suppliers_dict.values())
+        print(f"📊 Retornando {len(suppliers)} fornecedores com valores reais")
         return jsonify(suppliers)
         
     except Exception as e:
