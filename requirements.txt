@@ -1,2 +1,4 @@
-python-dotenv==1.0.0
-pyodbc==5.0.1
+flask
+flask-cors
+pymssql
+python-dotenv
