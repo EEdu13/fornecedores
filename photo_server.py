@@ -158,19 +158,37 @@ def save_order():
                 'error': 'Dados não fornecidos'
             }), 400
         
-        # Extrair dados do pedido
-        funcionario = data.get('funcionario', '')
-        cpf = data.get('cpf', '')
-        data_pedido = data.get('data', '')
-        pedidos = data.get('pedidos', [])
+        # Verificar se é formato novo (individual) ou antigo (múltiplos)
+        if 'pedidos' in data:
+            # Formato antigo com múltiplos pedidos
+            funcionario = data.get('funcionario', '')
+            cpf = data.get('cpf', '')
+            data_pedido = data.get('data', '')
+            pedidos = data.get('pedidos', [])
+        else:
+            # Formato novo - pedido individual
+            funcionario = data.get('funcionario', 'Usuario')
+            cpf = data.get('cnpj', '')  # Interface envia 'cnpj' em vez de 'cpf'
+            data_pedido = data.get('data_refeicao', '')
+            
+            # Criar array de pedidos com um item
+            pedidos = [{
+                'fornecedor': data.get('fornecedor', ''),
+                'cafe': data.get('cafe', 0),
+                'almoco_marmitex': data.get('almoco_marmitex', 0),
+                'almoco_local': data.get('almoco_local', 0),
+                'janta_marmitex': data.get('janta_marmitex', 0),
+                'janta_local': data.get('janta_local', 0),
+                'gelo': data.get('gelo', 0)
+            }]
         
-        if not pedidos:
+        if not pedidos or len(pedidos) == 0:
             return jsonify({
                 'success': False,
                 'error': 'Nenhum pedido especificado'
             }), 400
         
-        print(f"💾 Salvando pedido para {funcionario} - {len(pedidos)} itens")
+        print(f"💾 Salvando pedido para {funcionario} (CPF: {cpf}) - {len(pedidos)} itens - Data: {data_pedido}")
         
         # Conectar ao banco para salvar
         connection = conectar_azure_sql()
@@ -209,7 +227,7 @@ def save_order():
                 ))
                 
                 itens_salvos += 1
-                print(f"✅ Item salvo: {fornecedor} - CAFÉ:{cafe_qtd}, ALMOÇO MARMITEX:{almoco_marmitex_qtd}, ALMOÇO LOCAL:{almoco_local_qtd}")
+                print(f"✅ Item salvo: {fornecedor} - CAFÉ:{cafe_qtd}, ALMOÇO MARMITEX:{almoco_marmitex_qtd}, ALMOÇO LOCAL:{almoco_local_qtd}, JANTA MARMITEX:{janta_marmitex_qtd}, JANTA LOCAL:{janta_local_qtd}, GELO:{gelo_qtd}")
                 
             except Exception as e:
                 print(f"❌ Erro ao salvar item {fornecedor}: {e}")
@@ -226,7 +244,8 @@ def save_order():
             'success': True,
             'message': f'Pedido salvo com sucesso! {itens_salvos} itens processados',
             'itens_salvos': itens_salvos,
-            'funcionario': funcionario
+            'funcionario': funcionario,
+            'data_pedido': data_pedido
         })
         
     except Exception as e:
