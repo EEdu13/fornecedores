@@ -2045,7 +2045,7 @@
         // Function to load suppliers from SQL Server Azure API
         async function loadSuppliersFromAPI() {
             try {
-                const response = await fetch('http://localhost:8000/api/suppliers');
+                const response = await fetch('/api/suppliers');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
