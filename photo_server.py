@@ -70,7 +70,7 @@ def conectar_postgresql():
         return None
 
 def criar_tabela_pedidos_postgresql():
-    """Cria a tabela tb_pedidos no PostgreSQL se não existir"""
+    """Cria a tabela refeicoes no PostgreSQL se não existir"""
     try:
         connection = conectar_postgresql()
         if not connection:
@@ -81,7 +81,7 @@ def criar_tabela_pedidos_postgresql():
         
         # Criar tabela com a estrutura correta
         create_table_query = """
-        CREATE TABLE IF NOT EXISTS tb_pedidos (
+        CREATE TABLE IF NOT EXISTS refeicoes (
             id SERIAL PRIMARY KEY,
             data_refeicao DATE,
             cnpj CHAR(14),
@@ -113,7 +113,7 @@ def criar_tabela_pedidos_postgresql():
         cursor.close()
         connection.close()
         
-        print("✅ Tabela tb_pedidos criada/verificada no PostgreSQL")
+        print("✅ Tabela refeicoes criada/verificada no PostgreSQL")
         return True
         
     except Exception as e:
@@ -399,7 +399,7 @@ def save_order():
                 
                 # Inserir no PostgreSQL
                 query = """
-                INSERT INTO tb_pedidos 
+                INSERT INTO refeicoes 
                 (data_refeicao, cnpj, fornecedor, cafe, almoco_marmitex, almoco_local, 
                  janta_marmitex, janta_local, gelo, valor_cafe, valor_almoco_marmitex,
                  valor_almoco_local, valor_janta_marmitex, valor_janta_local, valor_gelo,
@@ -464,7 +464,7 @@ if __name__ == '__main__':
     print(f"   PostgreSQL Database: {PG_DATABASE}")
     
     # Inicializar tabela de pedidos no PostgreSQL
-    print("🔧 Inicializando tabela de pedidos no PostgreSQL...")
+    print("🔧 Inicializando tabela de refeições no PostgreSQL...")
     criar_tabela_pedidos_postgresql()
     
     print("✅ Iniciando servidor...")
