@@ -3,15 +3,20 @@
 
 import psycopg2
 import traceback
+import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # PostgreSQL Railway Configuration
 PG_CONFIG = {
-    'host': 'ballast.proxy.rlwy.net',
-    'port': 21526,
-    'user': 'postgres',
-    'password': 'CqdPHkjnPksiOYxCKVZtFUUOIGDIlPNr',
-    'database': 'railway'
+    'host': os.getenv('PGHOST'),
+    'port': int(os.getenv('PGPORT', 21526)),
+    'user': os.getenv('PGUSER'),
+    'password': os.getenv('PGPASSWORD'),
+    'database': os.getenv('PGDATABASE')
 }
 
 def test_postgresql_connection():

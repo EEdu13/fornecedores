@@ -18,20 +18,20 @@ load_dotenv()
 
 # SQL Server Azure Configuration
 SQL_CONFIG = {
-    'server': os.getenv('SQL_SERVER', 'alrflorestal.database.windows.net'),
-    'database': os.getenv('SQL_DATABASE', 'Tabela_teste'),
-    'username': os.getenv('SQL_USERNAME', 'sqladmin'),
+    'server': os.getenv('SQL_SERVER'),
+    'database': os.getenv('SQL_DATABASE'),
+    'username': os.getenv('SQL_USERNAME'),
     'password': os.getenv('SQL_PASSWORD'),
     'driver': os.getenv('SQL_DRIVER', '{ODBC Driver 17 for SQL Server}')
 }
 
 # PostgreSQL Railway Configuration
 PG_CONFIG = {
-    'host': os.getenv('PGHOST', 'ballast.proxy.rlwy.net'),
+    'host': os.getenv('PGHOST'),
     'port': int(os.getenv('PGPORT', 21526)),
-    'user': os.getenv('PGUSER', 'postgres'),
+    'user': os.getenv('PGUSER'),
     'password': os.getenv('PGPASSWORD'),
-    'database': os.getenv('PGDATABASE', 'railway')
+    'database': os.getenv('PGDATABASE')
 }
 
 class PhotoHandler:
@@ -216,6 +216,22 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps({'status': 'not_found'}).encode('utf-8'))
+        elif path == '/':
+            # Health check endpoint for Railway
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                'status': 'healthy',
+                'service': 'Fornecedores API',
+                'version': '1.0.0',
+                'endpoints': {
+                    'suppliers': '/api/suppliers',
+                    'photos': '/api/photo/{session_id}',
+                    'save_order': '/api/save-order'
+                }
+            }, ensure_ascii=False).encode('utf-8'))
         else:
             # Serve static files
             super().do_GET()
@@ -362,26 +378,42 @@ if __name__ == "__main__":
     
     # Get port and host from environment variables
     PORT = int(os.getenv('PORT', 8000))
-    HOST = os.getenv('HOST', '')
+    HOST = os.getenv('HOST', '0.0.0.0')  # Default to 0.0.0.0 for Railway
+    
+    print(f"🚀 Iniciando servidor na porta {PORT}")
+    print(f"🌐 Host: {HOST}")
     
     try:
-        with socketserver.TCPServer((HOST, PORT), HTTPHandler) as httpd:
-            print(f"✅ Servidor rodando em http://localhost:{PORT}")
-            print(f"📊 API de fornecedores: http://localhost:{PORT}/api/suppliers")
-            print(f"📷 API de fotos: http://localhost:{PORT}/api/photo/[session_id]")
-            print("📱 Sistema de QR Code e sincronização de fotos ativo")
-            print("🔄 Pressione Ctrl+C para parar o servidor")
-            httpd.serve_forever()
+        httpd = socketserver.TCPServer((HOST, PORT), HTTPHandler)
+        httpd.allow_reuse_address = True
+        
+        print(f"✅ Servidor rodando em http://{HOST}:{PORT}")
+        print(f"📊 API de fornecedores: /api/suppliers")
+        print(f"📷 API de fotos: /api/photo/[session_id]")
+        print(f"💾 API de pedidos: /api/save_order")
+        print("📱 Sistema de QR Code e sincronização de fotos ativo")
+        print("🔄 Pressione Ctrl+C para parar o servidor")
+        
+        httpd.serve_forever()
+        
     except OSError as e:
+        print(f"❌ Erro ao iniciar servidor: {e}")
         if e.errno == 10048:  # Port already in use on Windows
             PORT = get_free_port()
-            with socketserver.TCPServer((HOST, PORT), HTTPHandler) as httpd:
-                print(f"⚠️  Porta {int(os.getenv('PORT', 8000))} ocupada, usando porta {PORT}")
-                print(f"✅ Servidor rodando em http://localhost:{PORT}")
-                print(f"📊 API de fornecedores: http://localhost:{PORT}/api/suppliers")
-                print(f"📷 API de fotos: http://localhost:{PORT}/api/photo/[session_id]")
-                print("📱 Sistema de QR Code e sincronização de fotos ativo")
-                print("🔄 Pressione Ctrl+C para parar o servidor")
+            try:
+                httpd = socketserver.TCPServer((HOST, PORT), HTTPHandler)
+                httpd.allow_reuse_address = True
+                print(f"⚠️  Porta original ocupada, usando porta {PORT}")
+                print(f"✅ Servidor rodando em http://{HOST}:{PORT}")
                 httpd.serve_forever()
+            except Exception as backup_error:
+                print(f"❌ Erro crítico: {backup_error}")
+                raise
         else:
             raise
+    except KeyboardInterrupt:
+        print("\n� Servidor interrompido pelo usuário")
+    except Exception as e:
+        print(f"❌ Erro inesperado: {e}")
+        traceback.print_exc()
+        raise

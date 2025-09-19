@@ -3,14 +3,19 @@
 
 import json
 import pyodbc
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # SQL Server Azure Configuration
 SQL_CONFIG = {
-    'server': 'alrflorestal.database.windows.net',
-    'database': 'Tabela_teste',
-    'username': 'sqladmin',
-    'password': 'SenhaForte123!',
-    'driver': '{ODBC Driver 17 for SQL Server}'
+    'server': os.getenv('SQL_SERVER'),
+    'database': os.getenv('SQL_DATABASE'),
+    'username': os.getenv('SQL_USERNAME'),
+    'password': os.getenv('SQL_PASSWORD'),
+    'driver': os.getenv('SQL_DRIVER', '{ODBC Driver 17 for SQL Server}')
 }
 
 def get_suppliers_data():
