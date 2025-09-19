@@ -7,6 +7,7 @@ print("🔄 Iniciando imports...")
 from flask import Flask, jsonify, send_file, request
 from flask_cors import CORS
 import pymssql
+import psycopg2
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -22,6 +23,13 @@ SQL_SERVER = os.getenv('SQL_SERVER', 'alrflorestal.database.windows.net')
 SQL_DATABASE = os.getenv('SQL_DATABASE', 'Tabela_teste')
 SQL_USERNAME = os.getenv('SQL_USERNAME', 'sqladmin')
 SQL_PASSWORD = os.getenv('SQL_PASSWORD', '')
+
+# Configurações do PostgreSQL Railway - usando variáveis de ambiente
+PG_HOST = os.getenv('PGHOST', 'ballast.proxy.rlwy.net')
+PG_PORT = os.getenv('PGPORT', '21526')
+PG_USER = os.getenv('PGUSER', 'postgres')
+PG_PASSWORD = os.getenv('PGPASSWORD', '')
+PG_DATABASE = os.getenv('PGDATABASE', 'railway')
 
 print("✅ Configurações carregadas")
 
@@ -42,6 +50,64 @@ def conectar_azure_sql():
     except Exception as e:
         print(f"❌ Erro ao conectar: {e}")
         return None
+
+def conectar_postgresql():
+    """Conecta ao PostgreSQL Railway"""
+    try:
+        print(f"🔌 Conectando ao PostgreSQL {PG_HOST}:{PG_PORT}...")
+        connection = psycopg2.connect(
+            host=PG_HOST,
+            port=PG_PORT,
+            user=PG_USER,
+            password=PG_PASSWORD,
+            database=PG_DATABASE,
+            connect_timeout=30
+        )
+        print("✅ Conexão PostgreSQL estabelecida!")
+        return connection
+    except Exception as e:
+        print(f"❌ Erro ao conectar PostgreSQL: {e}")
+        return None
+
+def criar_tabela_pedidos_postgresql():
+    """Cria a tabela tb_pedidos no PostgreSQL se não existir"""
+    try:
+        connection = conectar_postgresql()
+        if not connection:
+            print("❌ Erro: Não foi possível conectar ao PostgreSQL")
+            return False
+        
+        cursor = connection.cursor()
+        
+        # Criar tabela se não existir
+        create_table_query = """
+        CREATE TABLE IF NOT EXISTS tb_pedidos (
+            id SERIAL PRIMARY KEY,
+            funcionario VARCHAR(255),
+            cpf VARCHAR(20),
+            data_pedido VARCHAR(20),
+            fornecedor VARCHAR(255),
+            cafe_qtd INTEGER DEFAULT 0,
+            almoco_marmitex_qtd INTEGER DEFAULT 0,
+            almoco_local_qtd INTEGER DEFAULT 0,
+            janta_marmitex_qtd INTEGER DEFAULT 0,
+            janta_local_qtd INTEGER DEFAULT 0,
+            gelo_qtd INTEGER DEFAULT 0,
+            data_criacao TIMESTAMP DEFAULT NOW()
+        );
+        """
+        
+        cursor.execute(create_table_query)
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        print("✅ Tabela tb_pedidos criada/verificada no PostgreSQL")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Erro ao criar tabela PostgreSQL: {e}")
+        return False
 
 @app.route('/favicon.ico')
 def favicon():
@@ -190,12 +256,12 @@ def save_order():
         
         print(f"💾 Salvando pedido para {funcionario} (CPF: {cpf}) - {len(pedidos)} itens - Data: {data_pedido}")
         
-        # Conectar ao banco para salvar
-        connection = conectar_azure_sql()
+        # Conectar ao PostgreSQL para salvar pedidos
+        connection = conectar_postgresql()
         if not connection:
             return jsonify({
                 'success': False,
-                'error': 'Erro de conexão com o banco de dados'
+                'error': 'Erro de conexão com o banco PostgreSQL'
             }), 500
         
         cursor = connection.cursor()
@@ -212,12 +278,12 @@ def save_order():
                 janta_local_qtd = pedido.get('janta_local', 0)
                 gelo_qtd = pedido.get('gelo', 0)
                 
-                # Inserir pedido na tabela (assumindo que existe uma tabela tb_pedidos)
+                # Inserir pedido na tabela PostgreSQL
                 query = """
                 INSERT INTO tb_pedidos 
                 (funcionario, cpf, data_pedido, fornecedor, cafe_qtd, almoco_marmitex_qtd, 
                  almoco_local_qtd, janta_marmitex_qtd, janta_local_qtd, gelo_qtd, data_criacao)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                 """
                 
                 cursor.execute(query, (
@@ -265,9 +331,16 @@ if __name__ == '__main__':
     print("   GET  /api/photo/<id> - Fotos")
     print("   POST /api/save-order - Salvar pedidos")
     print("🔧 Configurações:")
-    print(f"   Server: {SQL_SERVER}")
-    print(f"   Database: {SQL_DATABASE}")
-    print(f"   User: {SQL_USERNAME}")
+    print(f"   SQL Server: {SQL_SERVER}")
+    print(f"   SQL Database: {SQL_DATABASE}")
+    print(f"   SQL User: {SQL_USERNAME}")
+    print(f"   PostgreSQL: {PG_HOST}:{PG_PORT}")
+    print(f"   PostgreSQL Database: {PG_DATABASE}")
+    
+    # Inicializar tabela de pedidos no PostgreSQL
+    print("🔧 Inicializando tabela de pedidos no PostgreSQL...")
+    criar_tabela_pedidos_postgresql()
+    
     print("✅ Iniciando servidor...")
     
     # Usar porta do Railway se disponível, senão usar 5000
