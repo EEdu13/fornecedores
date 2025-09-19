@@ -81,7 +81,8 @@ def criar_tabela_pedidos_postgresql():
         
         # Criar tabela com a estrutura correta
         create_table_query = """
-        CREATE TABLE IF NOT EXISTS refeicoes (
+        CREATE SCHEMA IF NOT EXISTS FORNECEDORES;
+        CREATE TABLE IF NOT EXISTS FORNECEDORES.refeicoes (
             id SERIAL PRIMARY KEY,
             data_refeicao DATE,
             cnpj CHAR(14),
@@ -113,7 +114,7 @@ def criar_tabela_pedidos_postgresql():
         cursor.close()
         connection.close()
         
-        print("✅ Tabela refeicoes criada/verificada no PostgreSQL")
+        print("✅ Tabela FORNECEDORES.refeicoes criada/verificada no PostgreSQL")
         return True
         
     except Exception as e:
@@ -399,7 +400,7 @@ def save_order():
                 
                 # Inserir no PostgreSQL
                 query = """
-                INSERT INTO refeicoes 
+                INSERT INTO FORNECEDORES.refeicoes 
                 (data_refeicao, cnpj, fornecedor, cafe, almoco_marmitex, almoco_local, 
                  janta_marmitex, janta_local, gelo, valor_cafe, valor_almoco_marmitex,
                  valor_almoco_local, valor_janta_marmitex, valor_janta_local, valor_gelo,
