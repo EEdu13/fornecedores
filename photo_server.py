@@ -168,44 +168,23 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
         
+        print(f"🔍 Received GET request: {path}")
+        
         if path == '/':
             # Health check endpoint for Railway - sempre retorna 200
-            try:
-                status = {
-                    'status': 'healthy',
-                    'service': 'Fornecedores API',
-                    'version': '1.0.0',
-                    'timestamp': datetime.now().isoformat(),
-                    'endpoints': {
-                        'suppliers': '/api/suppliers',
-                        'photos': '/api/photo/{session_id}',
-                        'save_order': '/api/save-order'
-                    },
-                    'environment': {
-                        'sql_configured': bool(SQL_CONFIG.get('server') and SQL_CONFIG.get('password')),
-                        'postgres_configured': bool(PG_CONFIG.get('host') and PG_CONFIG.get('password')),
-                        'database_fallback': 'SQLite (built-in)' if not PG_CONFIG.get('host') else 'PostgreSQL (Railway)'
-                    }
-                }
-                
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.end_headers()
-                self.wfile.write(json.dumps(status, ensure_ascii=False).encode('utf-8'))
-                
-            except Exception as e:
-                # Even if there's an error, return 200 for health check
-                print(f"Health check error (but still returning 200): {e}")
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    'status': 'healthy',
-                    'service': 'Fornecedores API',
-                    'note': 'Basic health check passed'
-                }).encode('utf-8'))
+            print("💚 Health check endpoint accessed")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            # Simple response for health check
+            response = json.dumps({
+                'status': 'healthy',
+                'service': 'Fornecedores API'
+            })
+            self.wfile.write(response.encode('utf-8'))
+            return
                 
         elif path == '/api/suppliers':
             # Fetch suppliers from SQL Server Azure
@@ -503,7 +482,7 @@ if __name__ == "__main__":
     
     # Get port and host from environment variables
     PORT = int(os.getenv('PORT', 8000))
-    HOST = os.getenv('HOST', '0.0.0.0')  # Default to 0.0.0.0 for Railway
+    HOST = '0.0.0.0'  # Always use 0.0.0.0 for Railway deployment
     
     print("=" * 50)
     print("🚀 INICIANDO FORNECEDORES API")
@@ -512,21 +491,27 @@ if __name__ == "__main__":
     print(f"🔌 Porta: {PORT}")
     print(f"🗄️  SQL Server Config: {bool(SQL_CONFIG.get('server'))}")
     print(f"🐘 PostgreSQL Config: {bool(PG_CONFIG.get('host'))}")
+    print("🔍 Railway PORT env:", os.getenv('PORT'))
     print("=" * 50)
     
     try:
         # Test if we can bind to the port
+        print(f"🔄 Tentando bind em {HOST}:{PORT}")
         httpd = socketserver.TCPServer((HOST, PORT), HTTPHandler)
         httpd.allow_reuse_address = True
-        
-        print(f"✅ Servidor rodando em http://{HOST}:{PORT}")
-        print(f"🏥 Health Check: http://{HOST}:{PORT}/")
+        httpd.timeout = 30  # Add socket timeout
+        print(f"✅ Servidor inicializado com sucesso em http://{HOST}:{PORT}")
+        print(f"🔗 Health check em: http://{HOST}:{PORT}/")
         print(f"📊 API de fornecedores: http://{HOST}:{PORT}/api/suppliers")
         print(f"📷 API de fotos: http://{HOST}:{PORT}/api/photo/[session_id]")
         print(f"💾 API de pedidos: http://{HOST}:{PORT}/api/save-order")
         print("📱 Sistema de QR Code e sincronização de fotos ativo")
         print("🔄 Servidor pronto para receber requests...")
         print("=" * 50)
+        
+        # Flush stdout to ensure Railway sees the logs
+        import sys
+        sys.stdout.flush()
         
         # Start the server
         httpd.serve_forever()
