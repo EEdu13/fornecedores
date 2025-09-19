@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['python312', 'postgresql_16', 'postgresql_16.dev', 'gcc', 'pkg-config', 'libpq']
+nixPkgs = ['python312', 'gcc']
 
 [phases.install]
 cmds = ['python -m venv --copies /opt/venv', '. /opt/venv/bin/activate && pip install -r requirements.txt']
@@ -13,4 +13,3 @@ cmd = 'python photo_server.py'
 [variables]
 PORT = '8000'
 HOST = '0.0.0.0'
-PG_CONFIG = '/nix/store/*-postgresql-16.*/bin/pg_config'
