@@ -17,16 +17,16 @@ load_dotenv()
 
 print("🔍 DEBUG: Carregando variáveis de ambiente...")
 
-# SQL Server Azure Configuration
+# SQL Server Azure Configuration - com valores padrão seguros
 SQL_CONFIG = {
-    'server': os.getenv('SQL_SERVER'),
-    'database': os.getenv('SQL_DATABASE'),
-    'username': os.getenv('SQL_USERNAME'),
-    'password': os.getenv('SQL_PASSWORD'),
+    'server': os.getenv('SQL_SERVER', ''),
+    'database': os.getenv('SQL_DATABASE', ''),
+    'username': os.getenv('SQL_USERNAME', ''),
+    'password': os.getenv('SQL_PASSWORD', ''),
     'driver': os.getenv('SQL_DRIVER', '{ODBC Driver 17 for SQL Server}')
 }
 
-# PostgreSQL Railway Configuration
+# PostgreSQL Railway Configuration - com valores padrão seguros
 try:
     pgport = int(os.getenv('PGPORT', 21526))
 except (ValueError, TypeError):
@@ -34,16 +34,17 @@ except (ValueError, TypeError):
     print(f"⚠️  PGPORT inválido, usando padrão: {pgport}")
 
 PG_CONFIG = {
-    'host': os.getenv('PGHOST'),
+    'host': os.getenv('PGHOST', ''),
     'port': pgport,
-    'user': os.getenv('PGUSER'),
-    'password': os.getenv('PGPASSWORD'),
-    'database': os.getenv('PGDATABASE')
+    'user': os.getenv('PGUSER', ''),
+    'password': os.getenv('PGPASSWORD', ''),
+    'database': os.getenv('PGDATABASE', '')
 }
 
 print(f"🔍 SQL_SERVER: {'✅' if SQL_CONFIG.get('server') else '❌'}")
 print(f"🔍 PGHOST: {'✅' if PG_CONFIG.get('host') else '❌'}")
 print(f"🔍 PORT env: {os.getenv('PORT', 'não definida')}")
+print("🔍 DEBUG: Configuração carregada, continuando inicialização...")
 
 class PhotoHandler:
     # In-memory storage for photos (temporary)
@@ -489,8 +490,20 @@ def get_free_port():
     return port
 
 if __name__ == "__main__":
+    # Flush stdout para Railway ver os logs imediatamente
+    import sys
+    
+    print("🚀 INICIANDO SERVIDOR FORNECEDORES...")
+    sys.stdout.flush()
+    
     # Change to the script directory to serve files from there
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        print("📁 Diretório de trabalho configurado")
+        sys.stdout.flush()
+    except Exception as e:
+        print(f"⚠️  Erro ao configurar diretório: {e}")
+        sys.stdout.flush()
     
     # Get port and host from environment variables
     PORT = int(os.getenv('PORT', 8000))
@@ -505,13 +518,17 @@ if __name__ == "__main__":
     print(f"🐘 PostgreSQL Config: {bool(PG_CONFIG.get('host'))}")
     print("🔍 Railway PORT env:", os.getenv('PORT'))
     print("=" * 50)
+    sys.stdout.flush()
     
     try:
         # Test if we can bind to the port
         print(f"🔄 Tentando bind em {HOST}:{PORT}")
+        sys.stdout.flush()
+        
         httpd = socketserver.TCPServer((HOST, PORT), HTTPHandler)
         httpd.allow_reuse_address = True
         httpd.timeout = 30  # Add socket timeout
+        
         print(f"✅ Servidor inicializado com sucesso em http://{HOST}:{PORT}")
         print(f"🔗 Health check em: http://{HOST}:{PORT}/")
         print(f"📊 API de fornecedores: http://{HOST}:{PORT}/api/suppliers")
@@ -520,12 +537,11 @@ if __name__ == "__main__":
         print("📱 Sistema de QR Code e sincronização de fotos ativo")
         print("🔄 Servidor pronto para receber requests...")
         print("=" * 50)
-        
-        # Flush stdout to ensure Railway sees the logs
-        import sys
         sys.stdout.flush()
         
         # Start the server
+        print("🎯 Iniciando loop principal do servidor...")
+        sys.stdout.flush()
         httpd.serve_forever()
         
     except OSError as e:
