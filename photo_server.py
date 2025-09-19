@@ -7,7 +7,7 @@ import json
 import os
 import socket
 import pyodbc
-import psycopg2
+import sqlite3
 import traceback
 from datetime import datetime
 from dotenv import load_dotenv
@@ -81,23 +81,67 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
             raise
 
     def get_pg_connection(self):
-        """Create and return PostgreSQL Railway connection"""
+        """Create and return PostgreSQL Railway connection or SQLite fallback"""
         try:
-            if not PG_CONFIG.get('host') or not PG_CONFIG.get('password'):
-                raise Exception("PostgreSQL credentials not configured")
-                
-            conn = psycopg2.connect(
-                host=PG_CONFIG['host'],
-                port=PG_CONFIG['port'],
-                user=PG_CONFIG['user'],
-                password=PG_CONFIG['password'],
-                database=PG_CONFIG['database']
-            )
-            print("✅ Connected to PostgreSQL Railway successfully")
-            return conn
+            # First try PostgreSQL if configured
+            if PG_CONFIG.get('host') and PG_CONFIG.get('password'):
+                try:
+                    import psycopg2
+                    conn = psycopg2.connect(
+                        host=PG_CONFIG['host'],
+                        port=PG_CONFIG['port'],
+                        user=PG_CONFIG['user'],
+                        password=PG_CONFIG['password'],
+                        database=PG_CONFIG['database']
+                    )
+                    print("✅ Connected to PostgreSQL Railway successfully")
+                    return conn, 'postgresql'
+                except ImportError:
+                    print("⚠️  psycopg2 not available, falling back to SQLite")
+                except Exception as e:
+                    print(f"⚠️  PostgreSQL failed ({e}), falling back to SQLite")
+            
+            # Fallback to SQLite
+            db_path = 'orders.db'
+            conn = sqlite3.connect(db_path)
+            
+            # Create table if it doesn't exist
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS refeicoes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    data_refeicao TEXT NOT NULL,
+                    cnpj TEXT NOT NULL,
+                    fornecedor TEXT NOT NULL,
+                    cafe_qty REAL DEFAULT 0,
+                    cafe_valor_unitario REAL DEFAULT 0,
+                    cafe_total REAL DEFAULT 0,
+                    almoco_marmitex_qty REAL DEFAULT 0,
+                    almoco_marmitex_valor_unitario REAL DEFAULT 0,
+                    almoco_marmitex_total REAL DEFAULT 0,
+                    almoco_local_qty REAL DEFAULT 0,
+                    almoco_local_valor_unitario REAL DEFAULT 0,
+                    almoco_local_total REAL DEFAULT 0,
+                    janta_marmitex_qty REAL DEFAULT 0,
+                    janta_marmitex_valor_unitario REAL DEFAULT 0,
+                    janta_marmitex_total REAL DEFAULT 0,
+                    janta_local_qty REAL DEFAULT 0,
+                    janta_local_valor_unitario REAL DEFAULT 0,
+                    janta_local_total REAL DEFAULT 0,
+                    gelo_qty REAL DEFAULT 0,
+                    gelo_valor_unitario REAL DEFAULT 0,
+                    gelo_total REAL DEFAULT 0,
+                    total_geral REAL DEFAULT 0,
+                    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            conn.commit()
+            
+            print("✅ Connected to SQLite fallback successfully")
+            return conn, 'sqlite'
             
         except Exception as e:
-            print(f"❌ Error connecting to PostgreSQL Railway: {e}")
+            print(f"❌ Error connecting to database: {e}")
             raise
 
     def cleanup_old_photos(self):
@@ -139,7 +183,8 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
                     },
                     'environment': {
                         'sql_configured': bool(SQL_CONFIG.get('server') and SQL_CONFIG.get('password')),
-                        'postgres_configured': bool(PG_CONFIG.get('host') and PG_CONFIG.get('password'))
+                        'postgres_configured': bool(PG_CONFIG.get('host') and PG_CONFIG.get('password')),
+                        'database_fallback': 'SQLite (built-in)' if not PG_CONFIG.get('host') else 'PostgreSQL (Railway)'
                     }
                 }
                 
@@ -277,19 +322,8 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
         path = parsed_url.path
         
         if path == '/api/save-order':
-            # Save order to PostgreSQL
+            # Save order to database (PostgreSQL or SQLite fallback)
             try:
-                if not PG_CONFIG.get('host') or not PG_CONFIG.get('password'):
-                    self.send_response(503)
-                    self.send_header('Content-type', 'application/json')
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({
-                        'error': 'PostgreSQL not configured',
-                        'message': 'Database credentials not available'
-                    }).encode('utf-8'))
-                    return
-                
                 content_length = int(self.headers.get('Content-Length', 0))
                 if content_length == 0:
                     self.send_error(400, "No data provided")
@@ -305,7 +339,7 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
                         self.send_error(400, f"Missing required field: {field}")
                         return
                 
-                conn = self.get_pg_connection()
+                conn, db_type = self.get_pg_connection()
                 cursor = conn.cursor()
                 
                 # Calculate totals
@@ -333,39 +367,73 @@ class HTTPHandler(http.server.SimpleHTTPRequestHandler):
                 total_geral = (total_cafe + total_almoco_marmitex + total_almoco_local + 
                              total_janta_marmitex + total_janta_local + total_gelo)
                 
-                # Insert into PostgreSQL
-                insert_query = """
-                INSERT INTO fornecedores.refeicoes (
-                    data_refeicao, cnpj, fornecedor,
-                    cafe_qty, cafe_valor_unitario, cafe_total,
-                    almoco_marmitex_qty, almoco_marmitex_valor_unitario, almoco_marmitex_total,
-                    almoco_local_qty, almoco_local_valor_unitario, almoco_local_total,
-                    janta_marmitex_qty, janta_marmitex_valor_unitario, janta_marmitex_total,
-                    janta_local_qty, janta_local_valor_unitario, janta_local_total,
-                    gelo_qty, gelo_valor_unitario, gelo_total,
-                    total_geral, data_criacao
-                ) VALUES (
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s,
-                    %s, NOW()
-                )
-                """
-                
-                cursor.execute(insert_query, (
-                    order_data['data_refeicao'], order_data['cnpj'], order_data['fornecedor'],
-                    cafe_qty, valor_cafe, total_cafe,
-                    almoco_marmitex_qty, valor_almoco_marmitex, total_almoco_marmitex,
-                    almoco_local_qty, valor_almoco_local, total_almoco_local,
-                    janta_marmitex_qty, valor_janta_marmitex, total_janta_marmitex,
-                    janta_local_qty, valor_janta_local, total_janta_local,
-                    gelo_qty, valor_gelo, total_gelo,
-                    total_geral
-                ))
+                # Insert into database (PostgreSQL or SQLite)
+                if db_type == 'postgresql':
+                    insert_query = """
+                    INSERT INTO fornecedores.refeicoes (
+                        data_refeicao, cnpj, fornecedor,
+                        cafe_qty, cafe_valor_unitario, cafe_total,
+                        almoco_marmitex_qty, almoco_marmitex_valor_unitario, almoco_marmitex_total,
+                        almoco_local_qty, almoco_local_valor_unitario, almoco_local_total,
+                        janta_marmitex_qty, janta_marmitex_valor_unitario, janta_marmitex_total,
+                        janta_local_qty, janta_local_valor_unitario, janta_local_total,
+                        gelo_qty, gelo_valor_unitario, gelo_total,
+                        total_geral, data_criacao
+                    ) VALUES (
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s, %s, %s,
+                        %s, NOW()
+                    )
+                    """
+                    
+                    cursor.execute(insert_query, (
+                        order_data['data_refeicao'], order_data['cnpj'], order_data['fornecedor'],
+                        cafe_qty, valor_cafe, total_cafe,
+                        almoco_marmitex_qty, valor_almoco_marmitex, total_almoco_marmitex,
+                        almoco_local_qty, valor_almoco_local, total_almoco_local,
+                        janta_marmitex_qty, valor_janta_marmitex, total_janta_marmitex,
+                        janta_local_qty, valor_janta_local, total_janta_local,
+                        gelo_qty, valor_gelo, total_gelo,
+                        total_geral
+                    ))
+                else:  # SQLite
+                    insert_query = """
+                    INSERT INTO refeicoes (
+                        data_refeicao, cnpj, fornecedor,
+                        cafe_qty, cafe_valor_unitario, cafe_total,
+                        almoco_marmitex_qty, almoco_marmitex_valor_unitario, almoco_marmitex_total,
+                        almoco_local_qty, almoco_local_valor_unitario, almoco_local_total,
+                        janta_marmitex_qty, janta_marmitex_valor_unitario, janta_marmitex_total,
+                        janta_local_qty, janta_local_valor_unitario, janta_local_total,
+                        gelo_qty, gelo_valor_unitario, gelo_total,
+                        total_geral
+                    ) VALUES (
+                        ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?, ?,
+                        ?
+                    )
+                    """
+                    
+                    cursor.execute(insert_query, (
+                        order_data['data_refeicao'], order_data['cnpj'], order_data['fornecedor'],
+                        cafe_qty, valor_cafe, total_cafe,
+                        almoco_marmitex_qty, valor_almoco_marmitex, total_almoco_marmitex,
+                        almoco_local_qty, valor_almoco_local, total_almoco_local,
+                        janta_marmitex_qty, valor_janta_marmitex, total_janta_marmitex,
+                        janta_local_qty, valor_janta_local, total_janta_local,
+                        gelo_qty, valor_gelo, total_gelo,
+                        total_geral
+                    ))
                 
                 conn.commit()
                 conn.close()
